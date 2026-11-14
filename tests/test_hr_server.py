@@ -23,7 +23,7 @@ class HRServerTests(unittest.TestCase):
         self.lab=self.root/'lab'
         shutil.copytree(LAB_DIR/'data',self.lab/'data')
         (self.lab/'web').mkdir()
-        (self.lab/'web/index.html').write_text('<html><title>HR lab</title></html>')
+        (self.lab/'web/index.html').write_text('<html><title>HR lab</title></html>', encoding='utf-8')
         self.app=Application(self.lab,self.root,LabEngine(self.lab/'data',self.lab/'runtime'))
         self.server=make_server(0,self.app)
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True)

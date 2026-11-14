@@ -152,10 +152,8 @@ class ChunkingTests(unittest.TestCase):
             build_chunks(self.doc, "semantic", {"semantic_percentile": float("nan")}, lambda x: x)
 
     def test_supplied_employee_manual_is_covered_by_all_structural_algorithms(self):
-        path = Path(__file__).resolve().parents[2] / "output/hr_rag_video/materials/handbook.md"
-        if not path.is_file():
-            self.skipTest("教学素材原文不在当前检出目录")
-        doc = parse_document(path.read_text())
+        path = Path(__file__).resolve().parents[1] / "labs/hr_chunking_lab/data/handbook.md"
+        doc = parse_document(path.read_text(encoding="utf-8"))
         for strategy in ("fixed", "recursive", "structure", "contextual", "parent_child"):
             with self.subTest(strategy=strategy):
                 self.assert_complete_provenance(build_chunks(doc, strategy), doc.text)

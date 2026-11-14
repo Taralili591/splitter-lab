@@ -74,8 +74,8 @@ class HREngineTests(unittest.TestCase):
             "id": "Q01", "question": QUERY, "answer": GOLD_ANSWER,
             "required_points": [GOLD_POINT], "evidence_ids": ["F01"],
             "type": "可答", "case_facts": {"used_days": 2},
-        }]}, ensure_ascii=False))
-        (self.data_dir / "assistant_prompt.txt").write_text("只依据检索原文回答；没有证据就说明不足。")
+        }]}, ensure_ascii=False), encoding="utf-8")
+        (self.data_dir / "assistant_prompt.txt").write_text("只依据检索原文回答；没有证据就说明不足。", encoding="utf-8")
         self.lab = engine.LabEngine(self.data_dir, self.root / "runtime")
         self.settings = {
             "siliconflow_base_url": "https://example.invalid/v1",
@@ -210,6 +210,32 @@ class HREngineTests(unittest.TestCase):
         changed_overlap = self.lab.build_index("fixed", {**params, "chunk_overlap": 11}, self.settings)
         self.assertEqual(len({first["index_id"], changed_model["index_id"], changed_base["index_id"], changed_overlap["index_id"]}), 4)
         self.assertEqual(document_calls + 3, len([c for c in RecordingEmbedder.calls if c["role"] == "document"]))
+
+    def test_utf8_caches_and_run_records_ignore_platform_default_encoding(self):
+        read_text = Path.read_text
+
+        def legacy_windows_read(path, encoding=None, errors=None):
+            # Simulate a Windows installation whose default encoding is cp1252.
+            return read_text(path, encoding=encoding or "cp1252", errors=errors)
+
+        params = self.params(retrieval_mode="keyword")
+        with patch.object(Path, "read_text", legacy_windows_read):
+            first = self.lab.build(["contextual"], params, self.settings)
+            generated = len(RecordingChat.calls)
+            cached = self.lab.build(["contextual"], params, self.settings)
+            self.assertEqual(first["indexes"][0]["index_id"], cached["indexes"][0]["index_id"])
+            self.assertEqual(len(RecordingChat.calls), generated)
+            preview = self.lab.preview("contextual", params, self.settings)
+            self.assertEqual(preview["document"]["text"], SOURCE)
+            self.assertTrue(all("测试手册" in chunk["context"] for chunk in preview["chunks"]))
+
+            # Keep background caches but rebuild the index to exercise context reads.
+            for path in (self.lab.runtime_dir / "indexes").glob("*.json"):
+                path.unlink()
+            self.lab.build(["contextual"], params, self.settings)
+            self.assertEqual(len(RecordingChat.calls), generated)
+            run = self.lab.retrieve(["contextual"], QUERY, params, self.settings)
+            self.assertEqual(self.lab.load_run(run["run_id"])["question"], QUERY)
 
     def test_empty_retrieval_allows_insufficiency_answer_without_handbook_fallback(self):
         run = self.lab.retrieve(["fixed"], "zzzzzz_unmatched", self.params(retrieval_mode="keyword"), self.settings)

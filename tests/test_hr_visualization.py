@@ -165,7 +165,7 @@ class VisualizationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'data').mkdir()
-            (root / 'data/handbook.md').write_text(text)
+            (root / 'data/handbook.md').write_text(text, encoding='utf-8')
             lab = LabEngine(root / 'data', root / 'runtime')
             with patch('requests.post') as remote:
                 preview = lab.preview('fixed', {'chunk_size': 80, 'chunk_overlap': 20}, {})

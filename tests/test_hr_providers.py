@@ -85,10 +85,10 @@ class HrConfigTests(unittest.TestCase):
             if os.name == "posix":
                 self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
             self.assertEqual((root / ".env").read_bytes(), original_root)
-            self.assertIn('OTHER_SETTING="keep"', path.read_text())
-            self.assertIn('# keep comment', path.read_text())
+            self.assertIn('OTHER_SETTING="keep"', path.read_text(encoding="utf-8"))
+            self.assertIn('# keep comment', path.read_text(encoding="utf-8"))
             for name in ENV_NAMES.values():
-                self.assertIn(name + "=", path.read_text())
+                self.assertIn(name + "=", path.read_text(encoding="utf-8"))
             self.assertNotIn("api_key", result)
             for key in ("deepseek_api_key", "siliconflow_api_key"):
                 self.assertNotIn(key, result)
@@ -112,11 +112,11 @@ class HrConfigTests(unittest.TestCase):
         with TemporaryDirectory() as directory, patch.dict(os.environ, {}, clear=True):
             store = ConfigStore(Path(directory)/"lab", directory)
             store.save({})
-            self.assertEqual(len(store.path.read_text().splitlines()), len(ENV_NAMES))
+            self.assertEqual(len(store.path.read_text(encoding="utf-8").splitlines()), len(ENV_NAMES))
             os.environ["DEEPSEEK_MODEL"] = "process-model"
             store.save({"deepseek_model": "file-model"})
             self.assertEqual(store.get()["deepseek_model"], "process-model")
-            self.assertIn('DEEPSEEK_MODEL="file-model"', store.path.read_text())
+            self.assertIn('DEEPSEEK_MODEL="file-model"', store.path.read_text(encoding="utf-8"))
 
     def test_failed_atomic_save_leaves_old_config(self):
         with TemporaryDirectory() as directory, patch.dict(os.environ, {}, clear=True):
