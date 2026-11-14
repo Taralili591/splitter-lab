@@ -1,0 +1,30 @@
+# Local credentials: only the empty example belongs in the repository.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Virtual environments and Python caches.
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Model caches, generated contexts, personal questions, answers and exports.
+runtime/
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.log
+
+# Local OS/editor files.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
